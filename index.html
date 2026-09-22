@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>bookmuni — Lend and borrow books with people you already trust</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF0E2;
+    --surface: #E4E7D3;
+    --ink: #1E2A20;
+    --ink-soft: #4C5A4E;
+    --brand: #2F4A3C;
+    --brand-ink: #EAF1EA;
+    --accent: #B8862E;
+    --accent-ink: #2A1F0B;
+    --border: rgba(30,42,32,0.14);
+    --spine-1: #2F4A3C;
+    --spine-2: #B8862E;
+    --spine-3: #8B5E3C;
+    --spine-4: #5B6F79;
+    --spine-5: #7A4B4F;
+    --spine-6: #3E5C4E;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141911;
+      --surface: #1B2118;
+      --ink: #ECE9D8;
+      --ink-soft: #B4B9A6;
+      --brand: #6FA98B;
+      --brand-ink: #10160F;
+      --accent: #E0A94A;
+      --accent-ink: #201705;
+      --border: rgba(236,233,216,0.14);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141911;
+    --surface: #1B2118;
+    --ink: #ECE9D8;
+    --ink-soft: #B4B9A6;
+    --brand: #6FA98B;
+    --brand-ink: #10160F;
+    --accent: #E0A94A;
+    --accent-ink: #201705;
+    --border: rgba(236,233,216,0.14);
+    color-scheme: dark;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); scroll-behavior: smooth; }
+  * { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2 { font-family: 'Spectral', serif; font-weight: 500; color: var(--ink); margin: 0; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  a { color: inherit; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 24px;
+    max-width: 1080px; margin: 0 auto;
+  }
+  .word { font-family: 'Spectral', serif; font-size: 22px; font-weight: 600; }
+  .nav-link { font-size: 15px; text-decoration: none; border-bottom: 1px solid var(--border); padding-bottom: 2px; }
+
+  .hero {
+    display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center;
+    padding: 40px 24px 80px; max-width: 1080px; margin: 0 auto;
+  }
+  .hero h1 { font-size: clamp(32px, 4.2vw, 46px); line-height: 1.18; }
+  .hero .sub { margin-top: 22px; font-size: 18px; color: var(--ink-soft); max-width: 46ch; }
+
+  .waitlist { margin-top: 32px; }
+  .waitlist form { display: flex; gap: 10px; flex-wrap: wrap; }
+  .waitlist input[type="email"] {
+    flex: 1 1 220px; min-width: 0;
+    padding: 13px 16px; font-size: 16px; font-family: 'Karla', sans-serif;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink);
+  }
+  .waitlist input[type="email"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .btn {
+    display: inline-block; padding: 13px 22px; font-size: 16px; font-weight: 700;
+    font-family: 'Karla', sans-serif; border: none; border-radius: 8px; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink); text-decoration: none;
+    transition: transform 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .waitlist .note { margin-top: 10px; font-size: 14px; color: var(--ink-soft); }
+  .waitlist .status { margin-top: 10px; font-size: 14px; color: var(--brand); font-weight: 700; min-height: 1.2em; }
+
+  .see-below { display: inline-block; margin-top: 18px; font-size: 15px; color: var(--ink-soft); border-bottom: 1px solid var(--border); text-decoration: none; }
+
+  .shelf { display: flex; align-items: flex-end; gap: 8px; height: 220px; opacity: 0; transform: translateY(14px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .shelf.in { opacity: 1; transform: translateY(0); }
+  .shelf span { display: block; border-radius: 4px 4px 2px 2px; }
+  @media (prefers-reduced-motion: reduce) { .shelf { transition: none; opacity: 1; transform: none; } }
+
+  section { padding: 64px 24px; }
+  section.steps { border-top: 1px solid var(--border); }
+  .steps .wrap h2 { font-size: 28px; margin-bottom: 40px; max-width: 22ch; }
+  .step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .step { }
+  .step .num { font-family: 'Spectral', serif; font-size: 15px; color: var(--ink-soft); margin-bottom: 10px; }
+  .step h3 { font-family: 'Karla', sans-serif; font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+  .step p { font-size: 15px; color: var(--ink-soft); max-width: 32ch; }
+
+  section.trust { border-top: 1px solid var(--border); }
+  .trust .wrap { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 48px; }
+  .trust h2 { font-size: 28px; max-width: 14ch; }
+  .trust-list { display: flex; flex-direction: column; }
+  .trust-item { padding: 20px 0; border-top: 1px solid var(--border); }
+  .trust-item:first-child { border-top: none; padding-top: 0; }
+  .trust-item h3 { font-family: 'Karla', sans-serif; font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+  .trust-item p { font-size: 15px; color: var(--ink-soft); }
+
+  section.admin { background: var(--brand); color: var(--brand-ink); }
+  .admin .wrap { max-width: 720px; text-align: left; }
+  .admin h2 { color: var(--brand-ink); font-size: 30px; max-width: 16ch; }
+  .admin p { margin-top: 16px; font-size: 17px; opacity: 0.92; max-width: 52ch; }
+  .admin .btn { margin-top: 26px; background: var(--brand-ink); color: var(--brand); }
+
+  footer { padding: 40px 24px 56px; }
+  footer .wrap { display: flex; flex-direction: column; gap: 6px; }
+  footer .word { font-size: 17px; }
+  footer p { font-size: 14px; color: var(--ink-soft); }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding-top: 20px; padding-bottom: 56px; }
+    .hero .shelf-wrap { order: -1; }
+    .shelf { height: 130px; }
+    .step-grid { grid-template-columns: 1fr; gap: 28px; }
+    .trust .wrap { grid-template-columns: 1fr; gap: 24px; }
+    section { padding: 48px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <span class="word">bookmuni</span>
+  <a class="nav-link" href="#for-communities">For communities</a>
+</header>
+
+<div class="hero">
+  <div>
+    <h1>That book on your shelf? Someone two streets away would love to borrow it.</h1>
+    <p class="sub">bookmuni helps people in the same building, campus, or club lend and borrow physical books with neighbors they already know — not strangers on a marketplace.</p>
+
+    <div class="waitlist">
+      <form id="waitlist-form">
+        <label for="email" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);">Email address</label>
+        <input type="email" id="email" name="email" placeholder="you@email.com" required autocomplete="email">
+        <button type="submit" class="btn">Notify me at launch</button>
+      </form>
+      <p class="note">We'll only write to you once there's a community open near you.</p>
+      <p class="status" id="waitlist-status" aria-live="polite"></p>
+    </div>
+
+    <a class="see-below" href="#for-communities">Run a community instead? See how below.</a>
+  </div>
+
+  <div class="shelf-wrap">
+    <div class="shelf" id="shelf" aria-hidden="true">
+      <span style="width:26px; height:70%; background:var(--spine-1);"></span>
+      <span style="width:18px; height:55%; background:var(--spine-2);"></span>
+      <span style="width:22px; height:90%; background:var(--spine-3);"></span>
+      <span style="width:16px; height:40%; background:var(--spine-4);"></span>
+      <span style="width:30px; height:75%; background:var(--spine-5);"></span>
+      <span style="width:20px; height:60%; background:var(--spine-6);"></span>
+      <span style="width:24px; height:85%; background:var(--spine-2);"></span>
+      <span style="width:17px; height:50%; background:var(--spine-1);"></span>
+      <span style="width:28px; height:65%; background:var(--spine-4);"></span>
+      <span style="width:19px; height:95%; background:var(--spine-3);"></span>
+      <span style="width:23px; height:45%; background:var(--spine-6);"></span>
+    </div>
+  </div>
+</div>
+
+<section class="steps">
+  <div class="wrap">
+    <h2>How lending actually works</h2>
+    <div class="step-grid">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>List what's on your shelf</h3>
+        <p>Add the books you own and mark them available to your community — condition, genre, whatever people need to know before asking.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Someone nearby borrows it</h3>
+        <p>A member requests it, you approve, and you agree on a simple pickup — usually a spot your community already uses.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>It comes home on time</h3>
+        <p>Reminders keep the loan on track, and a quick rating after return keeps the whole community trustworthy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="trust">
+  <div class="wrap">
+    <h2>Built for a community you already trust</h2>
+    <div class="trust-list">
+      <div class="trust-item">
+        <h3>Private by invitation</h3>
+        <p>Every community is closed — you join with an invite code and admin approval, not a public signup anyone can find.</p>
+      </div>
+      <div class="trust-item">
+        <h3>No marketplace, no payments</h3>
+        <p>Books move between neighbors, not strangers, and nothing here is bought, sold, or delivered.</p>
+      </div>
+      <div class="trust-item">
+        <h3>Real accountability</h3>
+        <p>Every loan is tracked from pickup to return, with reminders and lightweight ratings — not a spreadsheet or an honor system.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="admin" id="for-communities">
+  <div class="wrap">
+    <h2>Running a community?</h2>
+    <p>If you manage a residential society, college hostel, office, or book club in Andhra Pradesh or Telangana, bookmuni is looking for its very first pilot. We'll set everything up — you just help us reach 20 to 30 people who already own books.</p>
+    <a class="btn" id="admin-cta" href="#">Talk to us about piloting</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="word">bookmuni</span>
+    <p>Currently piloting in Andhra Pradesh and Telangana. Not available elsewhere yet — tell us where you are and we'll keep you posted.</p>
+    <p>hello@bookmuni.com</p>
+  </div>
+</footer>
+
+<script>
+  // Reveal the shelf illustration once, on load.
+  window.addEventListener('DOMContentLoaded', function () {
+    requestAnimationFrame(function () {
+      var shelf = document.getElementById('shelf');
+      if (shelf) shelf.classList.add('in');
+    });
+  });
+
+  // Waitlist form: no backend yet, so we hand off to email via mailto.
+  var CONTACT_EMAIL = 'hello@bookmuni.com';
+
+  var form = document.getElementById('waitlist-form');
+  var statusEl = document.getElementById('waitlist-status');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('email').value.trim();
+    if (!email) return;
+    var subject = encodeURIComponent('Add me to the bookmuni waitlist');
+    var body = encodeURIComponent('Please add ' + email + ' to the bookmuni waitlist.');
+    window.location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+    statusEl.textContent = 'Opening your email app to confirm — send it and you\'re on the list.';
+  });
+
+  var adminCta = document.getElementById('admin-cta');
+  adminCta.addEventListener('click', function (e) {
+    e.preventDefault();
+    var subject = encodeURIComponent("I'd like to bring bookmuni to my community");
+    window.location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject;
+  });
+</script>
+
+</body>
+</html>
